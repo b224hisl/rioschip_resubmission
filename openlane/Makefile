@@ -16,7 +16,14 @@
 MAKEFLAGS+=--warn-undefined-variables
 
 export OPENLANE_RUN_TAG = $(shell date '+%y_%m_%d_%H_%M')
-OPENLANE_TAG ?= 2022.10.20
+export CARAVEL_ROOT?=$(PWD)/../caravel
+export MCW_ROOT?=$(PWD)/../mgmt_core_wrapper
+export SKYWATER_COMMIT=f70d8ca46961ff92719d8870a18a076370b85f6c
+export OPEN_PDKS_COMMIT?=41c0908b47130d5675ff8484255b43f66463a7d6
+export OPENLANE_TAG=2022.07.02_01.38.08
+export PDK?=sky130B
+export PDKPATH?=$(PDK_ROOT)/$(PDK)
+#OPENLANE_TAG ?= 2021.11.23_01.42.34
 OPENLANE_IMAGE_NAME ?= efabless/openlane:$(OPENLANE_TAG)
 designs = $(shell find * -maxdepth 0 -type d)
 current_design = null
@@ -27,8 +34,7 @@ openlane_cmd = \
 	-save_path $$(realpath ..) \
 	-save \
 	-tag $(OPENLANE_RUN_TAG) \
-	-overwrite \
-	-ignore_mismatches"
+	-overwrite"
 openlane_cmd_interactive = "flow.tcl -it -file $$(realpath ./$*/interactive.tcl)"
 
 docker_mounts = \
@@ -61,7 +67,7 @@ list:
 
 .PHONY: $(designs)
 $(designs) : export current_design=$@
-$(designs) : % : ./%/config.json
+$(designs) : % : ./%/config.tcl
 ifneq (,$(wildcard ./$(current_design)/interactive.tcl))
 	$(docker_run) \
 		$(OPENLANE_IMAGE_NAME) sh -c $(openlane_cmd_interactive)
@@ -84,7 +90,7 @@ openlane: check-openlane-env
 		echo "Deleting exisiting $(OPENLANE_ROOT)" && \
 		rm -rf $(OPENLANE_ROOT) && sleep 2; \
 		fi
-	git clone https://github.com/The-OpenROAD-Project/OpenLane -b $(OPENLANE_TAG) --depth=1 $(OPENLANE_ROOT) && \
+	git clone https://github.com/The-OpenROAD-Project/OpenLane --branch=$(OPENLANE_TAG) --depth=1 $(OPENLANE_ROOT) && \
 		cd $(OPENLANE_ROOT) && \
 		export OPENLANE_IMAGE_NAME=efabless/openlane:$(OPENLANE_TAG) && \
 		export IMAGE_NAME=efabless/openlane:$(OPENLANE_TAG) && \
